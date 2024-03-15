@@ -21,7 +21,7 @@ using System.Linq;
 using System.Text.Json;
 using Palmmedia.ReportGenerator.Core.Common;
 
-public class datareader : MonoBehaviour
+public class ExtractData : MonoBehaviour
 {
     [System.Serializable]
     public class MyBone
@@ -36,7 +36,6 @@ public class datareader : MonoBehaviour
     [System.Serializable]
     public class SerializableFinger
     {
-        public long frameId;
         public Vector3 Direction;
         public Vector3 TipPosition;
         public List<MyBone> Bones = new List<MyBone>();
@@ -45,10 +44,12 @@ public class datareader : MonoBehaviour
     [System.Serializable]
     public class PalmArm
     {
+        public long frameId;
         public List<SerializableFinger> fingers = new List<SerializableFinger>();
         public Vector3 PalmPosition; // The center position of the palm.
         public Vector3 PalmVelocity; // The rate of change of the palm position.
         public Vector3 WristPosition; // The position of the wrist of this hand.
+        public Vector3 ElbowPosition;
     }
 
     // the device itself
@@ -77,18 +78,19 @@ public class datareader : MonoBehaviour
             Hand cur = leapProvider.CurrentFrame.Hands[i];
 
             PalmArm palmArmData = new PalmArm();
-            palmArmData.PalmPosition = cur.PalmPosition.ToVector3();
-            palmArmData.PalmVelocity = cur.PalmVelocity.ToVector3();
-            palmArmData.WristPosition = cur.WristPosition.ToVector3();
+            palmArmData.frameId = leapProvider.CurrentFrame.Id;
+            palmArmData.PalmPosition = cur.PalmPosition;
+            palmArmData.PalmVelocity = cur.PalmVelocity;
+            palmArmData.WristPosition = cur.WristPosition;
+            palmArmData.ElbowPosition = cur.Arm.ElbowPosition;
 
             for (int j = 0; j < cur.Fingers.Count(); j++)
             {
                 Finger curfinger = cur.Fingers[j];
                 SerializableFinger serializableFinger = new SerializableFinger
                 {
-                    frameId = leapProvider.CurrentFrame.Id,
-                    Direction = curfinger.Direction.ToVector3(),
-                    TipPosition = curfinger.TipPosition.ToVector3()
+                    Direction = curfinger.Direction,
+                    TipPosition = curfinger.TipPosition
                 };
 
                 for (int x = 0; x < 4; x++)
@@ -97,9 +99,9 @@ public class datareader : MonoBehaviour
                     {
                         Width = curfinger.bones[x].Width,
                         Length = curfinger.bones[x].Length,
-                        Center = curfinger.bones[x].Center.ToVector3(),
-                        NextJoint = curfinger.bones[x].NextJoint.ToVector3(),
-                        PrevJoint = curfinger.bones[x].PrevJoint.ToVector3()
+                        Center = curfinger.bones[x].Center,
+                        NextJoint = curfinger.bones[x].NextJoint,
+                        PrevJoint = curfinger.bones[x].PrevJoint
                     };
 
                     serializableFinger.Bones.Add(myBone);

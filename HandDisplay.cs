@@ -21,7 +21,7 @@ using System.Text.Json;
 using Palmmedia.ReportGenerator.Core.Common;
 using System.Threading;
 
-public class testreading : MonoBehaviour
+public class HandDisplay : MonoBehaviour
 {
     [System.Serializable]
     public class MyBone
@@ -40,85 +40,58 @@ public class testreading : MonoBehaviour
         public Vector3 TipPosition;
         public List<MyBone> Bones = new List<MyBone>();
     }
-
     [System.Serializable]
     public class PalmArm
     {
         public long frameId;
         public List<SerializableFinger> fingers = new List<SerializableFinger>();
-        public Vector3 PalmPosition; //The center position of the palm.
-        public Vector3 PalmVelocity; //The rate of change of the palm position.
-        public Vector3 WristPosition; //The position of the wrist of this hand.
+        public Vector3 PalmPosition;//The center position of the palm.
+        public Vector3 PalmVelocity;//The rate of change of the palm position.
+        public Vector3 WristPosition;//The position of the wrist of this hand.
+        public Vector3 ElbowPosition;
     }
 
-    string filePath = "data4.json";
-
-    private void ClearCylinders()
-    {
-        // Destroy old cylinders from the previous frame
-        foreach (var cylinder in cylinders)
-        {
-            Destroy(cylinder);
-        }
-
-        // Clear the list
-        cylinders.Clear();
-    }
-
-    private void ClearPalmAndWrist()
-    {
-        // Destroy the palm position object
-        GameObject palmObject = GameObject.Find("PalmPosition");
-        if (palmObject != null)
-        {
-            Destroy(palmObject);
-        }
-
-        // Destroy the wrist position object
-        GameObject wristObject = GameObject.Find("WristPosition");
-        if (wristObject != null)
-        {
-            Destroy(wristObject);
-        }
-    }
-
+    string filePath = "data4.json";   
     // Start is called before the first frame update
     IEnumerator Start()
     {
         while (true)
         {
             if (Input.GetKey(KeyCode.Q))
+            // if (true)
             {
+                Debug.Log("Pressed 'Q'");
                 // Read the JSON file
                 string[] jsonLines = File.ReadAllLines(filePath);
                 long frameid = -1;
-
+                Debug.Log("frame id first = " + frameid);
                 // Iterate through each line in the file
                 foreach (string jsonLine in jsonLines)
                 {
                     // Deserialize the JSON data into PalmArm
                     PalmArm palmArmData = JsonUtility.FromJson<PalmArm>(jsonLine);
-
+                    Debug.Log("palmarmdata = " + palmArmData);
                     if (frameid == -1)
                     {
                         frameid = palmArmData.frameId;
                     }
-
+                    // Debug.Log("frame id = " + frameid);
+                    // Debug.Log("palmArmData.frameId = " + palmArmData.frameId);
                     if (frameid != -1 && frameid != palmArmData.frameId)
                     {
-                        yield return new WaitForSeconds(0.05f);
-
-                        // Clear cylinders
+                        float delay = Mathf.Max(0.02f, palmArmData.PalmVelocity.magnitude * Time.deltaTime);
+                        // Debug.Log("delayed for: " + delay);
+                        yield return new WaitForSeconds(delay);
+                        
+                        Debug.Log("deleat");
                         ClearCylinders();
-
-                        // Clear PalmPosition and WristPosition
                         ClearPalmAndWrist();
-
                         frameid = palmArmData.frameId;
                     }
 
-                    // Draw spheres for PalmPosition and WristPosition
-                    DrawPalmAndWrist(palmArmData.PalmPosition, palmArmData.WristPosition, 0.05f);
+                    float radios = 0.03f;
+                    // Debug.Log("started creating");
+                    DrawPalmAndWrist(palmArmData.PalmPosition, palmArmData.WristPosition, palmArmData.ElbowPosition, radios);
 
                     // Iterate through each finger in the palm
                     foreach (SerializableFinger finger in palmArmData.fingers)
@@ -130,6 +103,7 @@ public class testreading : MonoBehaviour
                             DrawCylinder(bone.PrevJoint, bone.NextJoint, bone.Width);
                         }
                     }
+                    // Debug.Log("end creation");
                 }
 
                 // Delete the last hand
@@ -140,8 +114,27 @@ public class testreading : MonoBehaviour
             yield return null;
         }
     }
-
     private List<GameObject> cylinders = new List<GameObject>();
+    private List<GameObject> spheres = new List<GameObject>();
+    private void ClearCylinders()
+    {
+        // Destroy old cylinders from the previous frame
+        foreach (var cylinder in cylinders)
+        {
+            Destroy(cylinder);
+        }
+
+        // Clear the list
+        cylinders.Clear();
+    }
+    private void ClearPalmAndWrist()
+    {
+        foreach (var sphere in spheres)
+        {
+            Destroy (sphere);
+        }
+        spheres.Clear();
+    }
     private void DrawCylinder(Vector3 start, Vector3 end, float width)
     {
         // Calculate the position of the cylinder
@@ -163,25 +156,46 @@ public class testreading : MonoBehaviour
 
         cylinders.Add(cylinder);
     }
-
-    private void DrawPalmAndWrist(Vector3 palmPosition, Vector3 wristPosition, float radius)
+    private void DrawPalmAndWrist(Vector3 palmPosition, Vector3 wristPosition,Vector3 elbowposition, float ballRadius)
     {
-        // Draw the palm position as a sphere
+        // Create a GameObject for the palm position
         GameObject palmObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        palmObject.name = "PalmPosition";
         palmObject.transform.position = palmPosition;
-        palmObject.transform.localScale = new Vector3(radius * 2, radius * 2, radius * 2);
+        palmObject.transform.localScale = new Vector3(ballRadius, ballRadius, ballRadius);
+        palmObject.GetComponent<Renderer>().material.color = Color.green;
 
-        // Draw the wrist position as a sphere
+        spheres.Add(palmObject);
+
+        // Create a GameObject for the wrist position
         GameObject wristObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        wristObject.name = "WristPosition";
         wristObject.transform.position = wristPosition;
-        wristObject.transform.localScale = new Vector3(radius * 2, radius * 2, radius * 2);
+        wristObject.transform.localScale = new Vector3(ballRadius, ballRadius, ballRadius);
+        wristObject.GetComponent<Renderer>().material.color = Color.blue;
+
+        spheres.Add(wristObject);
+
+        // Create a GameObject for the wrist position
+        GameObject elbow = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        elbow.transform.position = elbowposition;
+        elbow.transform.localScale = new Vector3(ballRadius, ballRadius, ballRadius);
+        elbow.GetComponent<Renderer>().material.color = Color.grey;
+
+        spheres.Add(elbow);
+
+        // Draw a line between wristObject and elbowObject using LineRenderer
+        LineRenderer lineRenderer = wristObject.AddComponent<LineRenderer>();
+        lineRenderer.material.color = Color.red;
+        lineRenderer.startWidth = 0.02f;
+        lineRenderer.endWidth = 0.02f;
+        lineRenderer.positionCount = 2;
+        lineRenderer.SetPosition(0, wristPosition);
+        lineRenderer.SetPosition(1, elbowposition);
     }
+    
 
     // Update is called once per frame
     void Update()
     {
-
+        
     }
 }
