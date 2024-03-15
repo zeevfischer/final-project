@@ -1,3 +1,8 @@
+/*
+this will be used for a cleaner code because we use this in multipule fiels 
+*/
+
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,17 +19,17 @@ public class MyBone
 [System.Serializable]
 public class SerializableFinger
 {
-    public long frameId;
     public Vector3 Direction;
     public Vector3 TipPosition;
     public List<MyBone> Bones = new List<MyBone>();
 }
-
 [System.Serializable]
 public class PalmArm
 {
+    public long frameId;
     public List<SerializableFinger> fingers = new List<SerializableFinger>();
-    public Vector3 PalmPosition;
-    public Vector3 PalmVelocity;
-    public Vector3 WristPosition;
+    public Vector3 PalmPosition;//The center position of the palm.
+    public Vector3 PalmVelocity;//The rate of change of the palm position.
+    public Vector3 WristPosition;//The position of the wrist of this hand.
+    public Vector3 ElbowPosition;
 }

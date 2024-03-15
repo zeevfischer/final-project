@@ -1,7 +1,7 @@
 //author: zeev fischer 
 /*
-this calss will read a json file note the json file coresponds to the classes Mybone and SerializableFinger all changes need to be compateble 
-even in the calss cylinderFinger
+this calss will read a json file note the json file coresponds to the classes Mybone and SerializableFinger 
+again immprted from the file HandData.cs
 it will worck only after pressing "q" !!
 */
 using System.Collections;
@@ -23,34 +23,6 @@ using System.Threading;
 
 public class HandDisplay : MonoBehaviour
 {
-    [System.Serializable]
-    public class MyBone
-    {
-        public float Width;
-        public float Length;
-        public Vector3 Center;
-        public Vector3 NextJoint;
-        public Vector3 PrevJoint;
-    }
-
-    [System.Serializable]
-    public class SerializableFinger
-    {
-        public Vector3 Direction;
-        public Vector3 TipPosition;
-        public List<MyBone> Bones = new List<MyBone>();
-    }
-    [System.Serializable]
-    public class PalmArm
-    {
-        public long frameId;
-        public List<SerializableFinger> fingers = new List<SerializableFinger>();
-        public Vector3 PalmPosition;//The center position of the palm.
-        public Vector3 PalmVelocity;//The rate of change of the palm position.
-        public Vector3 WristPosition;//The position of the wrist of this hand.
-        public Vector3 ElbowPosition;
-    }
-
     string filePath = "data4.json";   
     // Start is called before the first frame update
     IEnumerator Start()
@@ -58,32 +30,24 @@ public class HandDisplay : MonoBehaviour
         while (true)
         {
             if (Input.GetKey(KeyCode.Q))
-            // if (true)
             {
-                Debug.Log("Pressed 'Q'");
                 // Read the JSON file
                 string[] jsonLines = File.ReadAllLines(filePath);
                 long frameid = -1;
-                Debug.Log("frame id first = " + frameid);
                 // Iterate through each line in the file
                 foreach (string jsonLine in jsonLines)
                 {
                     // Deserialize the JSON data into PalmArm
                     PalmArm palmArmData = JsonUtility.FromJson<PalmArm>(jsonLine);
-                    Debug.Log("palmarmdata = " + palmArmData);
                     if (frameid == -1)
                     {
                         frameid = palmArmData.frameId;
                     }
-                    // Debug.Log("frame id = " + frameid);
-                    // Debug.Log("palmArmData.frameId = " + palmArmData.frameId);
                     if (frameid != -1 && frameid != palmArmData.frameId)
                     {
                         float delay = Mathf.Max(0.02f, palmArmData.PalmVelocity.magnitude * Time.deltaTime);
-                        // Debug.Log("delayed for: " + delay);
                         yield return new WaitForSeconds(delay);
                         
-                        Debug.Log("deleat");
                         ClearCylinders();
                         ClearPalmAndWrist();
                         frameid = palmArmData.frameId;
@@ -190,12 +154,5 @@ public class HandDisplay : MonoBehaviour
         lineRenderer.positionCount = 2;
         lineRenderer.SetPosition(0, wristPosition);
         lineRenderer.SetPosition(1, elbowposition);
-    }
-    
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

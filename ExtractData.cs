@@ -2,7 +2,7 @@
 /*
 this is a data extraction class
 it creats the file data4.json
-the data here is a json file the data corresponds to the MyBone, SerializableFinger, and PalmArm classes any change needs to be across all files!!
+the data here is a json file the data corresponds to the MyBone, SerializableFinger, and PalmArm classes created in HandData.cs file
 */
 
 using System.Collections;
@@ -23,35 +23,6 @@ using Palmmedia.ReportGenerator.Core.Common;
 
 public class ExtractData : MonoBehaviour
 {
-    [System.Serializable]
-    public class MyBone
-    {
-        public float Width;
-        public float Length;
-        public Vector3 Center;
-        public Vector3 NextJoint;
-        public Vector3 PrevJoint;
-    }
-
-    [System.Serializable]
-    public class SerializableFinger
-    {
-        public Vector3 Direction;
-        public Vector3 TipPosition;
-        public List<MyBone> Bones = new List<MyBone>();
-    }
-
-    [System.Serializable]
-    public class PalmArm
-    {
-        public long frameId;
-        public List<SerializableFinger> fingers = new List<SerializableFinger>();
-        public Vector3 PalmPosition; // The center position of the palm.
-        public Vector3 PalmVelocity; // The rate of change of the palm position.
-        public Vector3 WristPosition; // The position of the wrist of this hand.
-        public Vector3 ElbowPosition;
-    }
-
     // the device itself
     public LeapProvider leapProvider;
     string filePath = "data4.json";
@@ -87,6 +58,7 @@ public class ExtractData : MonoBehaviour
             for (int j = 0; j < cur.Fingers.Count(); j++)
             {
                 Finger curfinger = cur.Fingers[j];
+
                 SerializableFinger serializableFinger = new SerializableFinger
                 {
                     Direction = curfinger.Direction,
@@ -95,6 +67,7 @@ public class ExtractData : MonoBehaviour
 
                 for (int x = 0; x < 4; x++)
                 {
+
                     MyBone myBone = new MyBone
                     {
                         Width = curfinger.bones[x].Width,
