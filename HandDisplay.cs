@@ -45,7 +45,7 @@ public class HandDisplay : MonoBehaviour
                     }
                     if (frameid != -1 && frameid != palmArmData.frameId)
                     {
-                        float delay = Mathf.Max(0.02f, palmArmData.PalmVelocity.magnitude * Time.deltaTime);
+                        float delay = (palmArmData.PalmVelocity.magnitude * Time.deltaTime) + 0.009f;
                         yield return new WaitForSeconds(delay);
                         
                         ClearCylinders();
@@ -74,7 +74,6 @@ public class HandDisplay : MonoBehaviour
                 ClearCylinders();
                 ClearPalmAndWrist();
             }
-
             yield return null;
         }
     }

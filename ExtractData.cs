@@ -16,65 +16,100 @@ using TMPro;
 using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEngine.Playables;
-using System;
 using System.Linq;
 using System.Text.Json;
 using Palmmedia.ReportGenerator.Core.Common;
+using System;
+using System.Timers;
 
 public class ExtractData : MonoBehaviour
 {
     // the device itself
     public LeapProvider leapProvider;
     string filePath = "data4.json";
+    bool isRunning = false;
+    const float timerInterval = 10f;
+    bool timer_on = false;
+    float timer = 0f;
+
+
 
     // Start is called before the first frame update
     private void Start()
     {
         // Uncomment the following lines if you want to delete the file on start
-        // if (File.Exists(filePath))
-        // {
-        //     File.Delete(filePath);
-        // }
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
     }
-
     // Update is called once per frame
     private void Update()
     {
-        // Create a list to store the data for all fingers and palms
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            isRunning = true;
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            isRunning = false;
+        }
+        else if (Input.GetKeyDown(KeyCode.T))
+        {
+            isRunning = true;
+            timer_on = true;
+            timer = 0f;
+        }
+
+        if (isRunning)
+        {
+            if (timer_on)
+            {
+                timer += Time.deltaTime;
+                if (timer >= timerInterval)
+                {
+                    isRunning = false;
+                    timer = 0f; // Reset timer
+                }
+                ExtractHandData();
+            }
+            else
+            {
+                ExtractHandData();
+            }
+        }
+    }
+
+    private void ExtractHandData()
+    {
         List<string> handDataList = new List<string>();
 
-        for (int i = 0; i < leapProvider.CurrentFrame.Hands.Count(); i++)
+        foreach (Hand hand in leapProvider.CurrentFrame.Hands)
         {
-            // run over all hands
-            Hand cur = leapProvider.CurrentFrame.Hands[i];
-
             PalmArm palmArmData = new PalmArm();
             palmArmData.frameId = leapProvider.CurrentFrame.Id;
-            palmArmData.PalmPosition = cur.PalmPosition;
-            palmArmData.PalmVelocity = cur.PalmVelocity;
-            palmArmData.WristPosition = cur.WristPosition;
-            palmArmData.ElbowPosition = cur.Arm.ElbowPosition;
+            palmArmData.PalmPosition = hand.PalmPosition;
+            palmArmData.PalmVelocity = hand.PalmVelocity;
+            palmArmData.WristPosition = hand.WristPosition;
+            palmArmData.ElbowPosition = hand.Arm.ElbowPosition;
 
-            for (int j = 0; j < cur.Fingers.Count(); j++)
+            foreach (Finger finger in hand.Fingers)
             {
-                Finger curfinger = cur.Fingers[j];
-
                 SerializableFinger serializableFinger = new SerializableFinger
                 {
-                    Direction = curfinger.Direction,
-                    TipPosition = curfinger.TipPosition
+                    Direction = finger.Direction,
+                    TipPosition = finger.TipPosition
                 };
 
-                for (int x = 0; x < 4; x++)
+                for (int i = 0; i < 4; i++)
                 {
-
                     MyBone myBone = new MyBone
                     {
-                        Width = curfinger.bones[x].Width,
-                        Length = curfinger.bones[x].Length,
-                        Center = curfinger.bones[x].Center,
-                        NextJoint = curfinger.bones[x].NextJoint,
-                        PrevJoint = curfinger.bones[x].PrevJoint
+                        Width = finger.bones[i].Width,
+                        Length = finger.bones[i].Length,
+                        Center = finger.bones[i].Center,
+                        NextJoint = finger.bones[i].NextJoint,
+                        PrevJoint = finger.bones[i].PrevJoint
                     };
 
                     serializableFinger.Bones.Add(myBone);
@@ -83,12 +118,10 @@ public class ExtractData : MonoBehaviour
                 palmArmData.fingers.Add(serializableFinger);
             }
 
-            // Convert PalmArm to JSON string and add to the list
             string jsonString = JsonUtility.ToJson(palmArmData);
             handDataList.Add(jsonString);
         }
 
-        // Write all hand data to the file outside the loop
         File.AppendAllLines(filePath, handDataList);
     }
 }
