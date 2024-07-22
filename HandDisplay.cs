@@ -24,6 +24,7 @@ using System.Threading;
 public class HandDisplay : MonoBehaviour
 {
     string filePath = "data4.json";   
+    // string filePath = "mirrored_data4.json";
     // Start is called before the first frame update
     IEnumerator Start()
     {
