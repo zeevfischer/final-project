@@ -45,9 +45,17 @@ def extract_tip_positions(data):
     return np.array(positions)
 
 # Load the data
-data1 = load_json('data_pool_2/data4.json')
-data2 = load_json('data_pool_2/mirrored_data4.json')
+# data1 = load_json('data_pool_2/data4.json')
 # data2 = load_json('data_pool_2/suffle.json')
+
+data1 = load_json('data_pool_3/unsync_right_hand_data.json')
+data2 = load_json('data_pool_3/unsync_left_hand_data.json')
+
+# data1 = load_json('data_pool_3/sync_left_hand_data.json')
+# data2 = load_json('data_pool_3/sync_right_hand_data.json')
+
+# data1 = load_json('data_pool_4/temp1.json')
+# data2 = load_json('data_pool_4/temp2.json')
 
 # Extract palm positions
 positions1 = extract_palm_positions(data1)
@@ -60,6 +68,7 @@ print("DTW Distance (Position):", distance_position)
 # Normalize DTW distance for Palm Position
 normalized_distance_position = distance_position / len(positions1)
 print("Normalized DTW Distance (Position):", normalized_distance_position)
+print()
 
 # Extract palm velocities
 velocities1 = extract_palm_velocities(data1)
@@ -72,6 +81,7 @@ print("DTW Distance (Velocity):", distance_velocity)
 # Normalize DTW distance for Palm Velocity
 normalized_distance_velocity = distance_velocity / len(velocities1)
 print("Normalized DTW Distance (Velocity):", normalized_distance_velocity)
+print()
 
 # Extract tip positions
 tip_positions1 = extract_tip_positions(data1)
@@ -84,3 +94,4 @@ print("DTW Distance (Tip Position):", distance_tip_position)
 # Normalize DTW distance for Tip Position
 normalized_distance_tip_position = distance_tip_position / len(tip_positions1)
 print("Normalized DTW Distance (Tip Position):", normalized_distance_tip_position)
+print()

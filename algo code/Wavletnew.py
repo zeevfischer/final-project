@@ -1,11 +1,3 @@
-'''
-Wavelet coherence is a method to study the relationship between two time series in the time-frequency domain.
-It uses wavelet transforms to decompose the signals into different frequency components,
-and then calculates the coherence between these components.
-This allows you to see how the relationship between the signals changes over time and across different frequencies.
-
-the only algorithem that is not good for now
-'''
 import json
 import numpy as np
 import pywt
@@ -23,7 +15,6 @@ def extract_palm_positions(data):
     for frame in data:
         palm_position = frame['PalmPosition']
         positions.append([palm_position['x'], palm_position['y'], palm_position['z']])
-        # positions.append([abs(palm_position['x']), abs(palm_position['y']), abs(palm_position['z'])])
     return np.array(positions)
 
 # Function to extract palm velocities
@@ -31,7 +22,6 @@ def extract_palm_velocities(data):
     velocities = []
     for frame in data:
         palm_velocity = frame['PalmVelocity']
-        # velocities.append([abs(palm_velocity['x']), abs(palm_velocity['y']), abs(palm_velocity['z'])])
         velocities.append([palm_velocity['x'], palm_velocity['y'], palm_velocity['z']])
     return np.array(velocities)
 
@@ -46,11 +36,15 @@ def extract_TipPosition(data):
         positions.append(np.mean(frame_positions, axis=0))
     return np.array(positions)
 
-# Load the data
-# data1 = load_json('data_pool_2/data4.json')
-# data2 = load_json('data_pool_2/mirrored_data4.json')
-# data2 = load_json('data_pool_2/suffle.json')
+# Function to calculate wavelet coherence
+def wavelet_coherence(a, b):
+    scales = np.arange(1, 128)
+    cwt_a, _ = pywt.cwt(a, scales, 'cmor')
+    cwt_b, _ = pywt.cwt(b, scales, 'cmor')
+    coherence = np.abs(np.mean(cwt_a * np.conj(cwt_b), axis=0))
+    return coherence
 
+# Load the data
 data1 = load_json('data_pool_3/sync_right_hand_data.json')
 data2 = load_json('data_pool_3/sync_left_hand_data.json')
 
@@ -70,26 +64,26 @@ positions2 = extract_palm_positions(data2)
 velocities1 = extract_palm_velocities(data1)
 velocities2 = extract_palm_velocities(data2)
 
-# Function to calculate wavelet coherence
-def wavelet_coherence(a, b):
-    scales = np.arange(1, 128)
-    cwt_a, _ = pywt.cwt(a[:, 0], scales, 'morl')
-    cwt_b, _ = pywt.cwt(b[:, 0], scales, 'morl')
-    coherence = np.abs(np.mean(cwt_a * np.conj(cwt_b), axis=0))
-    return coherence
+# Step 1: Flip the data for the second hand along the x-axis to account for mirroring
+positions2_flipped = np.copy(positions2)
+positions2_flipped[:, 0] = -positions2_flipped[:, 0]
 
-# Calculate wavelet coherence for positions
-coherence_positions = wavelet_coherence(positions1, positions2)
-# print(coherence_positions)
-plt.plot(coherence_positions)
-plt.title("Wavelet Coherence (Positions)")
-plt.show()
+velocities2_flipped = np.copy(velocities2)
+velocities2_flipped[:, 0] = -velocities2_flipped[:, 0]
 
-# Calculate wavelet coherence for velocities
-coherence_velocities = wavelet_coherence(velocities1, velocities2)
-# print(coherence_velocities)
-plt.plot(coherence_velocities)
-plt.title("Wavelet Coherence (Velocities)")
-plt.show()
+# Step 2: Perform wavelet coherence analysis for each axis separately
 
+# Wavelet coherence for positions (X, Y, Z separately)
+for axis in range(3):
+    coherence_positions = wavelet_coherence(positions1[:, axis], positions2_flipped[:, axis])
+    plt.plot(coherence_positions)
+    plt.title(f"Wavelet Coherence (Position Axis {axis})")
+    plt.show()
+
+# Wavelet coherence for velocities (X, Y, Z separately)
+for axis in range(3):
+    coherence_velocities = wavelet_coherence(velocities1[:, axis], velocities2_flipped[:, axis])
+    plt.plot(coherence_velocities)
+    plt.title(f"Wavelet Coherence (Velocity Axis {axis})")
+    plt.show()
 

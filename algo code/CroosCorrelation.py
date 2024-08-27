@@ -167,7 +167,9 @@ Question: why did we need here to use abs on the data !!!!! ??????
 #
 # if __name__ == "__main__":
 #     main()
-
+"""
+there is no need to chang this code as the cross Correlation already dose the shifts this is what the lag is !
+"""
 
 import json
 import numpy as np
@@ -184,7 +186,7 @@ def extract_palm_positions(data):
     positions = []
     for frame in data:
         palm_position = frame['PalmPosition']
-        positions.append([abs(palm_position['x']), abs(palm_position['y']), abs(palm_position['z'])])
+        positions.append([palm_position['x'], palm_position['y'], palm_position['z']])
     return np.array(positions)
 
 # Function to extract palm velocities
@@ -192,7 +194,7 @@ def extract_palm_velocities(data):
     velocities = []
     for frame in data:
         palm_velocity = frame['PalmVelocity']
-        velocities.append([abs(palm_velocity['x']), abs(palm_velocity['y']), abs(palm_velocity['z'])])
+        velocities.append([palm_velocity['x'], palm_velocity['y'], palm_velocity['z']])
     return np.array(velocities)
 
 # Function to extract tip positions
@@ -202,7 +204,7 @@ def extract_tip_positions(data):
         frame_positions = []
         for finger in frame['fingers']:
             tip_position = finger['TipPosition']
-            frame_positions.append([abs(tip_position['x']), abs(tip_position['y']), abs(tip_position['z'])])
+            frame_positions.append([tip_position['x'], tip_position['y'], tip_position['z']])
         positions.append(np.mean(frame_positions, axis=0))
     return np.array(positions)
 
@@ -212,40 +214,82 @@ def cross_correlation_normalized(a, b):
     b = (b - np.mean(b)) / np.std(b)
     return correlate(a, b)
 
+# Function to compute correlation without lag
+def correlation_without_lag(a, b):
+    min_len = min(len(a), len(b))
+    a = a[:min_len]
+    b = b[:min_len]
+    a = (a - np.mean(a)) / np.std(a)
+    b = (b - np.mean(b)) / np.std(b)
+    return np.dot(a, b) / len(a)
+
 # Load the data
-data1 = load_json('data_pool_2/data4.json')
+# data1 = load_json('data_pool_2/data4.json')
 # data2 = load_json('data_pool_2/mirrored_data4.json')
-data2 = load_json('data_pool_2/suffle.json')
+# data2 = load_json('data_pool_2/suffle.json')
+
+# data1 = load_json('data_pool_3/sync_right_hand_data.json')
+# data2 = load_json('data_pool_3/sync_left_hand_data.json')
+
+data1 = load_json('data_pool_3/unsync_right_hand_data.json')
+data2 = load_json('data_pool_3/unsync_left_hand_data.json')
+
+################
+# the file on axis = 1 is to take the mirrored hand and shift it to match the other hand
+################
 
 # Extract palm positions
 positions1 = extract_palm_positions(data1)
 positions2 = extract_palm_positions(data2)
+positions2 = np.flip(positions2, axis=1)
 
 # Compute the normalized cross-correlation
 correlation_normalized = cross_correlation_normalized(positions1[:, 0], positions2[:, 0])
 max_corr = np.max(correlation_normalized)
 lag = np.argmax(correlation_normalized) - (len(positions1) - 1)
-print("Maximum Correlation (Normalized):", max_corr)
-print("Lag at Maximum Correlation (Normalized):", lag)
+
+# Compute correlation without lag
+corr_without_lag_positions = correlation_without_lag(positions1[:, 0], positions2[:, 0])
+
+print("Maximum Correlation (Normalized) with Lag:", max_corr)
+print("Lag at Maximum Correlation:", lag)
+print("Correlation Without Lag (Positions):", corr_without_lag_positions)
+print()
+
 
 # Extract palm velocities
 velocities1 = extract_palm_velocities(data1)
 velocities2 = extract_palm_velocities(data2)
+velocities2 = np.flip(velocities2, axis=1)
 
 # Compute the normalized cross-correlation for velocities
 correlation_velocity_normalized = cross_correlation_normalized(velocities1[:, 0], velocities2[:, 0])
 max_corr_velocity = np.max(correlation_velocity_normalized)
 lag_velocity = np.argmax(correlation_velocity_normalized) - (len(velocities1) - 1)
-print("Maximum Velocity Correlation (Normalized):", max_corr_velocity)
-print("Lag at Maximum Velocity Correlation (Normalized):", lag_velocity)
+
+# Compute correlation without lag for velocities
+corr_without_lag_velocities = correlation_without_lag(velocities1[:, 0], velocities2[:, 0])
+
+print("Maximum Velocity Correlation (Normalized) with Lag:", max_corr_velocity)
+print("Lag at Maximum Velocity Correlation:", lag_velocity)
+print("Correlation Without Lag (Velocities):", corr_without_lag_velocities)
+print()
+
 
 # Extract tip positions
 tip_positions1 = extract_tip_positions(data1)
 tip_positions2 = extract_tip_positions(data2)
+tip_positions2 = np.flip(tip_positions2, axis=1)
 
 # Compute the normalized cross-correlation for tip positions
 correlation_tip_normalized = cross_correlation_normalized(tip_positions1[:, 0], tip_positions2[:, 0])
 max_corr_tip = np.max(correlation_tip_normalized)
 lag_tip = np.argmax(correlation_tip_normalized) - (len(tip_positions1) - 1)
-print("Maximum Tip Position Correlation (Normalized):", max_corr_tip)
-print("Lag at Maximum Tip Position Correlation (Normalized):", lag_tip)
+
+# Compute correlation without lag for tip positions
+corr_without_lag_tips = correlation_without_lag(tip_positions1[:, 0], tip_positions2[:, 0])
+
+print("Maximum Tip Position Correlation (Normalized) with Lag:", max_corr_tip)
+print("Lag at Maximum Tip Position Correlation:", lag_tip)
+print("Correlation Without Lag (Tip Positions):", corr_without_lag_tips)
+print()
